@@ -6,9 +6,9 @@
 </head>
 <body>
 
-<h2>Probar Horarios</h2>
+<h2>Probar Reservas Activas</h2>
 
-<button onclick="probar()">Cargar Horarios</button>
+<button onclick="probar()">Cargar Reservas</button>
 
 <pre id="resultado"></pre>
 
@@ -19,7 +19,7 @@ function probar() {
   fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
-      action: "obtenerHorarios"
+      action: "obtenerReservas"
     })
   })
   .then(res => res.json())
