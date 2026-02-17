@@ -1,58 +1,79 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Agenda Estética - Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda Estética</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      background-color: #f4f4f4;
     }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
+
+    h2 {
+      margin-top: 30px;
+    }
+
+    .horarios {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-bottom: 20px;
     }
-    pre {
+
+    button {
+      padding: 10px 15px;
+      border: 1px solid #333;
       background: white;
-      padding: 15px;
-      overflow: auto;
-      border-radius: 8px;
-      max-height: 500px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #333;
+      color: white;
     }
   </style>
 </head>
 <body>
 
-<h2>Prueba de Agenda</h2>
+<h1>Agenda Online</h1>
 
-<button onclick="generarAgenda()">Generar Agenda</button>
+<button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
 
-<pre id="resultado"></pre>
+<div id="agenda"></div>
 
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwbmSWJuaoK-5ltcw4Bbk_xqW5ZzInCAfjdxjYh2avUkCoRJjzuQPtwyDF7Yol0t1Ry/exec?action=agenda";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwbmSWJuaoK-5ltcw4Bbk_xqW5ZzInCAfjdxjYh2avUkCoRJjzuQPtwyDF7Yol0t1Ry/exec";
+async function cargarAgenda() {
+  const res = await fetch(API_URL);
+  const data = await res.json();
 
-function generarAgenda() {
+  const contenedor = document.getElementById("agenda");
+  contenedor.innerHTML = "";
 
-  document.getElementById("resultado").innerText = "Cargando...";
+  data.forEach(dia => {
+    if (dia.bloquesDisponibles.length > 0) {
 
-  fetch(`${API_URL}?action=agenda`)
-    .then(response => response.json())
-    .then(data => {
-      document.getElementById("resultado").innerText =
-        JSON.stringify(data, null, 2);
-    })
-    .catch(error => {
-      document.getElementById("resultado").innerText =
-        "Error: " + error;
-    });
+      const titulo = document.createElement("h2");
+      titulo.textContent = dia.fecha + " (" + dia.dia + ")";
+      contenedor.appendChild(titulo);
+
+      const divHorarios = document.createElement("div");
+      divHorarios.className = "horarios";
+
+      dia.bloquesDisponibles.forEach(b => {
+        const btn = document.createElement("button");
+        btn.textContent = b.hora;
+        btn.onclick = () => alert("Seleccionaste: " + b.fecha + " " + b.hora);
+        divHorarios.appendChild(btn);
+      });
+
+      contenedor.appendChild(divHorarios);
+    }
+  });
 }
-
 </script>
 
 </body>
