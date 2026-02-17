@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<h2>Generar Próximos 21 Días</h2>
+<h2>Generar Bloques Reales</h2>
 
 <button onclick="generar()">Generar</button>
 
@@ -17,7 +17,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycbye6IIQJwokLvNTuhr49o9x
 
 async function generar() {
 
-  // 1️⃣ Obtener horarios desde la API
   const horariosRes = await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({ action: "obtenerHorarios" })
@@ -26,25 +25,58 @@ async function generar() {
   const horariosData = await horariosRes.json();
   const horarios = horariosData.horarios;
 
-  // 2️⃣ Generar próximos 21 días
   const hoy = new Date();
-  let dias = [];
+  let agenda = [];
 
-  for (let i = 0; i < 21; i++) {
+  for (let i = 0; i < 7; i++) {  // solo 7 días para prueba
     const fecha = new Date();
     fecha.setDate(hoy.getDate() + i);
 
-    const nombreDia = fecha.toLocaleDateString("es-AR", { weekday: "long" });
-    
-    dias.push({
-      fecha: fecha.toISOString().split("T")[0],
-      diaSemana: capitalizar(nombreDia)
+    const nombreDia = capitalizar(
+      fecha.toLocaleDateString("es-AR", { weekday: "long" })
+    );
+
+    const fechaISO = fecha.toISOString().split("T")[0];
+
+    let bloquesDia = [];
+
+    horarios.forEach(h => {
+      if (h.dia === nombreDia) {
+
+        let minutos = (h.tipo === "FRACCIONADO") ? 30 : 60;
+
+        let inicio = convertirMinutos(h.inicio);
+        let fin = convertirMinutos(h.fin);
+
+        for (let t = inicio; t < fin; t += minutos) {
+          bloquesDia.push({
+            fecha: fechaISO,
+            hora: convertirHora(t)
+          });
+        }
+      }
+    });
+
+    agenda.push({
+      fecha: fechaISO,
+      dia: nombreDia,
+      bloques: bloquesDia
     });
   }
 
-  // 3️⃣ Mostrar resultado
   document.getElementById("resultado").innerText =
-    JSON.stringify({ dias, horarios }, null, 2);
+    JSON.stringify(agenda, null, 2);
+}
+
+function convertirMinutos(hora) {
+  const [h, m] = hora.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function convertirHora(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0');
 }
 
 function capitalizar(texto) {
