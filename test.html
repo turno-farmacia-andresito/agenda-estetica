@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<h2>Generar Bloques Reales</h2>
+<h2>Agenda con Bloqueo Real</h2>
 
 <button onclick="generar()">Generar</button>
 
@@ -17,18 +17,25 @@ const API_URL = "https://script.google.com/macros/s/AKfycbye6IIQJwokLvNTuhr49o9x
 
 async function generar() {
 
-  const horariosRes = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "obtenerHorarios" })
-  });
+  const [horariosRes, reservasRes] = await Promise.all([
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "obtenerHorarios" })
+    }),
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "obtenerReservas" })
+    })
+  ]);
 
-  const horariosData = await horariosRes.json();
-  const horarios = horariosData.horarios;
+  const horarios = (await horariosRes.json()).horarios;
+  const reservas = (await reservasRes.json()).reservas;
 
   const hoy = new Date();
   let agenda = [];
 
-  for (let i = 0; i < 7; i++) {  // solo 7 días para prueba
+  for (let i = 0; i < 7; i++) {
+
     const fecha = new Date();
     fecha.setDate(hoy.getDate() + i);
 
@@ -44,15 +51,23 @@ async function generar() {
       if (h.dia === nombreDia) {
 
         let minutos = (h.tipo === "FRACCIONADO") ? 30 : 60;
-
         let inicio = convertirMinutos(h.inicio);
         let fin = convertirMinutos(h.fin);
 
         for (let t = inicio; t < fin; t += minutos) {
-          bloquesDia.push({
-            fecha: fechaISO,
-            hora: convertirHora(t)
-          });
+
+          const hora = convertirHora(t);
+
+          const ocupado = reservas.some(r =>
+            r.fecha === fechaISO && r.hora === hora
+          );
+
+          if (!ocupado) {
+            bloquesDia.push({
+              fecha: fechaISO,
+              hora: hora
+            });
+          }
         }
       }
     });
@@ -60,7 +75,7 @@ async function generar() {
     agenda.push({
       fecha: fechaISO,
       dia: nombreDia,
-      bloques: bloquesDia
+      bloquesDisponibles: bloquesDia
     });
   }
 
