@@ -2,101 +2,71 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Motor Agenda</title>
+  <title>Test API Agenda</title>
 </head>
 <body>
 
+<h2>Probar Validación de Clave</h2>
+<input type="text" id="clave" placeholder="Ingrese clave">
+<button onclick="validarClave()">Validar</button>
+<div id="resultadoClave"></div>
+
+<hr>
+
+<h2>Probar Horarios</h2>
+<button onclick="cargarHorarios()">Cargar Horarios</button>
+<pre id="resultadoHorarios"></pre>
+
+<hr>
+
+<h2>Probar Reservas Activas</h2>
+<button onclick="cargarReservas()">Cargar Reservas</button>
+<pre id="resultadoReservas"></pre>
+
+<hr>
+
 <h2>Agenda con Bloqueo Real</h2>
-
-<button onclick="generar()">Generar</button>
-
-<pre id="resultado"></pre>
+<button onclick="generarAgenda()">Generar</button>
+<pre id="resultadoAgenda"></pre>
 
 <script>
+
 const API_URL = "https://script.google.com/macros/s/AKfycbye6IIQJwokLvNTuhr49o9xxMmwc1PbQvwLrKYqe6MJ7p0YR5pNZdWJnU4GmeLab4TLug/exec";
 
-async function generar() {
+function validarClave() {
+  const clave = document.getElementById("clave").value;
 
-  const [horariosRes, reservasRes] = await Promise.all([
-    fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "obtenerHorarios" })
-    }),
-    fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "obtenerReservas" })
-    })
-  ]);
-
-  const horarios = (await horariosRes.json()).horarios;
-  const reservas = (await reservasRes.json()).reservas;
-
-  const hoy = new Date();
-  let agenda = [];
-
-  for (let i = 0; i < 7; i++) {
-
-    const fecha = new Date();
-    fecha.setDate(hoy.getDate() + i);
-
-    const nombreDia = capitalizar(
-      fecha.toLocaleDateString("es-AR", { weekday: "long" })
-    );
-
-    const fechaISO = fecha.toISOString().split("T")[0];
-
-    let bloquesDia = [];
-
-    horarios.forEach(h => {
-      if (h.dia === nombreDia) {
-
-        let minutos = (h.tipo === "FRACCIONADO") ? 30 : 60;
-        let inicio = convertirMinutos(h.inicio);
-        let fin = convertirMinutos(h.fin);
-
-        for (let t = inicio; t < fin; t += minutos) {
-
-          const hora = convertirHora(t);
-
-          const ocupado = reservas.some(r =>
-            r.fecha === fechaISO && r.hora === hora
-          );
-
-          if (!ocupado) {
-            bloquesDia.push({
-              fecha: fechaISO,
-              hora: hora
-            });
-          }
-        }
-      }
+  fetch(`${API_URL}?action=validarClave&clave=${clave}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("resultadoClave").innerText = JSON.stringify(data, null, 2);
     });
+}
 
-    agenda.push({
-      fecha: fechaISO,
-      dia: nombreDia,
-      bloquesDisponibles: bloquesDia
+function cargarHorarios() {
+  fetch(`${API_URL}?action=horarios`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("resultadoHorarios").innerText = JSON.stringify(data, null, 2);
     });
-  }
-
-  document.getElementById("resultado").innerText =
-    JSON.stringify(agenda, null, 2);
 }
 
-function convertirMinutos(hora) {
-  const [h, m] = hora.split(":").map(Number);
-  return h * 60 + m;
+function cargarReservas() {
+  fetch(`${API_URL}?action=reservas`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("resultadoReservas").innerText = JSON.stringify(data, null, 2);
+    });
 }
 
-function convertirHora(min) {
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0');
+function generarAgenda() {
+  fetch(`${API_URL}?action=agenda`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("resultadoAgenda").innerText = JSON.stringify(data, null, 2);
+    });
 }
 
-function capitalizar(texto) {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
 </script>
 
 </body>
