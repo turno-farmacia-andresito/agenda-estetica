@@ -1,79 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Agenda Estética</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    h2 {
-      margin-top: 30px;
-    }
-
-    .horarios {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    button {
-      padding: 10px 15px;
-      border: 1px solid #333;
-      background: white;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #333;
-      color: white;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Agenda Online</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+button { margin: 4px; padding: 8px 12px; cursor: pointer; }
+h2 { margin-top: 30px; }
+</style>
 </head>
 <body>
 
 <h1>Agenda Online</h1>
-
 <button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
 
 <div id="agenda"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwbmSWJuaoK-5ltcw4Bbk_xqW5ZzInCAfjdxjYh2avUkCoRJjzuQPtwyDF7Yol0t1Ry/exec?action=agenda";
+
+const API_URL = "https://script.google.com/macros/s/AKfycbwbmSWJuaoK-5ltcw4Bbk_xqW5ZzInCAfjdxjYh2avUkCoRJjzuQPtwyDF7Yol0t1Ry/exec";
 
 async function cargarAgenda() {
-  const res = await fetch(API_URL);
+  const res = await fetch(API_URL + "?action=agenda");
   const data = await res.json();
 
   const contenedor = document.getElementById("agenda");
   contenedor.innerHTML = "";
 
   data.forEach(dia => {
-    if (dia.bloquesDisponibles.length > 0) {
+    if (dia.bloquesDisponibles.length === 0) return;
 
-      const titulo = document.createElement("h2");
-      titulo.textContent = dia.fecha + " (" + dia.dia + ")";
-      contenedor.appendChild(titulo);
+    const titulo = document.createElement("h2");
+    titulo.textContent = dia.fecha + " (" + dia.dia + ")";
+    contenedor.appendChild(titulo);
 
-      const divHorarios = document.createElement("div");
-      divHorarios.className = "horarios";
-
-      dia.bloquesDisponibles.forEach(b => {
-        const btn = document.createElement("button");
-        btn.textContent = b.hora;
-        btn.onclick = () => alert("Seleccionaste: " + b.fecha + " " + b.hora);
-        divHorarios.appendChild(btn);
-      });
-
-      contenedor.appendChild(divHorarios);
-    }
+    dia.bloquesDisponibles.forEach(b => {
+      const btn = document.createElement("button");
+      btn.textContent = b.hora;
+      btn.onclick = () => reservar(b.fecha, b.hora);
+      contenedor.appendChild(btn);
+    });
   });
 }
+
+async function reservar(fecha, hora) {
+
+  const nombre = prompt("Ingrese su nombre:");
+  if (!nombre) return;
+
+  const telefono = prompt("Ingrese su teléfono:");
+  if (!telefono) return;
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "crearReserva",
+      fecha: fecha,
+      hora: hora,
+      nombre: nombre,
+      telefono: telefono
+    })
+  });
+
+  const data = await res.json();
+
+  if (data.ok) {
+    alert("Reserva confirmada");
+    cargarAgenda();
+  } else {
+    alert("Error al reservar");
+  }
+}
+
 </script>
 
 </body>
