@@ -11,7 +11,7 @@ body {
 }
 
 h1 {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 button {
@@ -44,6 +44,11 @@ button:hover {
 .seccion {
   margin-bottom: 30px;
 }
+
+.dia {
+  font-weight: bold;
+  margin-top: 15px;
+}
 </style>
 </head>
 
@@ -69,13 +74,13 @@ button:hover {
 
 <script>
 
-const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzIeuaYwueVSG_TZiRlSLkzGy4oZ4z0mu4IQ2eYl-iLzxBX7Rq_zJujVMOR-MT-oC5H/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwjX0SYKSOKSJBzF35OGBkpbNPiSPUZg63UvicrBIPnTqWzfyV46rKbV1KaXTPDQoA/exec";
 
 let servicioSeleccionado = null;
 
 function seleccionarServicio(btn) {
 
-  document.querySelectorAll("button").forEach(b => {
+  document.querySelectorAll(".seccion button").forEach(b => {
     b.classList.remove("servicio-activo");
   });
 
@@ -92,42 +97,40 @@ function cargarAgenda() {
 
   fetch(URL_SCRIPT + "?action=generarAgenda")
     .then(res => res.json())
-    .then(data => mostrarAgenda(data))
-    .catch(err => {
-      console.error(err);
-      alert("Error cargando agenda");
+    .then(data => {
+
+      const contenedor = document.getElementById("agenda");
+      contenedor.innerHTML = "";
+
+      data.forEach(dia => {
+
+        const diaDiv = document.createElement("div");
+        diaDiv.className = "dia";
+        diaDiv.innerText = dia.fecha + " - " + dia.bloquesDisponibles.length + " turnos";
+        contenedor.appendChild(diaDiv);
+
+        dia.bloquesDisponibles.forEach(bloque => {
+
+          const btn = document.createElement("button");
+          btn.className = "horario-btn";
+          btn.innerText = bloque.hora;
+
+          btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
+
+          contenedor.appendChild(btn);
+        });
+
+        contenedor.appendChild(document.createElement("hr"));
+      });
+
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("Error al cargar la agenda");
     });
 }
 
-function mostrarAgenda(data) {
-
-  const contenedor = document.getElementById("agenda");
-  contenedor.innerHTML = "";
-
-  data.forEach(dia => {
-
-    const titulo = document.createElement("h4");
-    titulo.innerText = dia.fecha + " (" + dia.dia + ") - " + dia.bloquesDisponibles.length + " disponibles";
-    contenedor.appendChild(titulo);
-
-    dia.bloquesDisponibles.forEach(bloque => {
-
-      const btn = document.createElement("button");
-      btn.classList.add("horario-btn");
-      btn.innerText = bloque.hora;
-
-      btn.onclick = function() {
-        confirmarReserva(bloque.fecha, bloque.hora);
-      };
-
-      contenedor.appendChild(btn);
-    });
-
-    contenedor.appendChild(document.createElement("hr"));
-  });
-}
-
-function confirmarReserva(fecha, hora) {
+function reservarTurno(fecha, hora) {
   alert("Reservando " + servicioSeleccionado + " el " + fecha + " a las " + hora);
 }
 
