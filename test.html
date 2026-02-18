@@ -7,37 +7,34 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  padding: 30px;
+  padding: 40px;
 }
 
 h1 {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
-.section {
-  margin-bottom: 40px;
+.seccion {
+  margin-bottom: 30px;
 }
 
 button {
   padding: 8px 14px;
   margin: 5px;
+  border: 1px solid #333;
+  background: #f4f4f4;
   cursor: pointer;
+  border-radius: 4px;
 }
 
-.servicio-btn.active {
-  background-color: #72bd99;
+button.activo {
+  background: #72bd99;
   color: white;
   border: none;
 }
 
-.hora-btn {
-  border: 1px solid #999;
-  background: white;
-}
-
-.hora-btn:hover {
-  background: #72bd99;
-  color: white;
+.horarios button {
+  margin: 4px;
 }
 </style>
 </head>
@@ -46,16 +43,18 @@ button {
 
 <h1>Agenda Online</h1>
 
-<div class="section">
+<div class="seccion">
   <h3>1️⃣ Elegí el servicio</h3>
-  <button class="servicio-btn" onclick="seleccionarServicio(this,'Facial')">Facial</button>
-  <button class="servicio-btn" onclick="seleccionarServicio(this,'Limpieza')">Limpieza</button>
-  <button class="servicio-btn" onclick="seleccionarServicio(this,'Corporal')">Corporal</button>
+  <button onclick="seleccionarServicio(this)">Facial</button>
+  <button onclick="seleccionarServicio(this)">Limpieza</button>
+  <button onclick="seleccionarServicio(this)">Corporal</button>
 </div>
 
-<div class="section">
+<hr>
+
+<div class="seccion">
   <h3>2️⃣ Elegí horario disponible</h3>
-  <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
+  <button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
   <div id="agenda"></div>
 </div>
 
@@ -63,63 +62,76 @@ button {
 
 let servicioSeleccionado = null;
 
-function seleccionarServicio(btn, servicio) {
-  servicioSeleccionado = servicio;
-
-  document.querySelectorAll('.servicio-btn')
-    .forEach(b => b.classList.remove('active'));
-
-  btn.classList.add('active');
-}
-
-function cargarHorarios() {
-
-  fetch("https://script.google.com/macros/s/AKfycbxSrByl2wsxSOBnf5Zd6beqyh-YFDfqddCfvDpTGSiSsMRNYleSt_XIvEl5pz2ofeU/exec?action=generarAgenda")
-    .then(res => res.json())
-    .then(data => mostrarAgenda(data))
-    .catch(err => {
-      console.error(err);
-      alert("Error al cargar horarios");
-    });
-}
-
-function mostrarAgenda(data) {
-
-  const contenedor = document.getElementById("agenda");
-  contenedor.innerHTML = "";
-
-  data.forEach(dia => {
-
-    if (!dia.bloquesDisponibles.length) return;
-
-    const titulo = document.createElement("h4");
-    titulo.innerText = dia.fecha + " (" + dia.dia + ")";
-    contenedor.appendChild(titulo);
-
-    dia.bloquesDisponibles.forEach(bloque => {
-
-      const btn = document.createElement("button");
-      btn.className = "hora-btn";
-      btn.innerText = bloque.hora;
-
-      btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
-
-      contenedor.appendChild(btn);
-    });
-
+function seleccionarServicio(btn) {
+  document.querySelectorAll(".seccion button").forEach(b => {
+    b.classList.remove("activo");
   });
+
+  btn.classList.add("activo");
+  servicioSeleccionado = btn.textContent;
+}
+
+function cargarAgenda() {
+
+  if (!servicioSeleccionado) {
+    alert("Primero seleccioná un servicio");
+    return;
+  }
+
+  fetch("https://script.google.com/macros/s/AKfycbyec_jJOE9A7v-zdjJ6z2Wuqt19_dqmGSrLxa0h-64vZk2K_xlZju6QQ40RtB3AEW4u/exec?action=generarAgenda")
+    .then(res => res.json())
+    .then(data => {
+
+      const contenedor = document.getElementById("agenda");
+      contenedor.innerHTML = "";
+
+      data.forEach(dia => {
+
+        const titulo = document.createElement("h4");
+        titulo.textContent = dia.fecha + " (" + dia.dia + ")";
+        contenedor.appendChild(titulo);
+
+        const divHorarios = document.createElement("div");
+        divHorarios.className = "horarios";
+
+        dia.bloquesDisponibles.forEach(bloque => {
+          const btn = document.createElement("button");
+          btn.textContent = bloque.hora;
+          btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
+          divHorarios.appendChild(btn);
+        });
+
+        contenedor.appendChild(divHorarios);
+      });
+
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("Error al cargar la agenda");
+    });
 }
 
 function reservarTurno(fecha, hora) {
 
-  if (!servicioSeleccionado) {
-    alert("Primero elegí un servicio");
-    return;
-  }
+  const nombre = prompt("Ingresá tu nombre:");
+  if (!nombre) return;
 
-  alert("Reserva confirmada:\n" +
-        servicioSeleccionado + "\n" +
-        fecha + " - " + hora);
+  fetch("https://script.google.com/macros/s/AKfycbyec_jJOE9A7v-zdjJ6z2Wuqt19_dqmGSrLxa0h-64vZk2K_xlZju6QQ40RtB3AEW4u/exec?action=reservar&fecha=" 
+        + fecha + 
+        "&hora=" + hora + 
+        "&servicio=" + servicioSeleccionado + 
+        "&nombre=" + nombre)
+    .then(res => res.json())
+    .then(response => {
+
+      if (response.ok) {
+        alert("Reserva confirmada");
+        cargarAgenda();
+      } else {
+        alert("Error al reservar");
+      }
+
+    });
 }
 
 </script>
