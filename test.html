@@ -3,32 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>Agenda Online</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    button { margin: 5px; padding: 8px 12px; cursor: pointer; }
-    .horarios { margin-top: 20px; }
-    .dia { margin-top: 25px; }
-  </style>
 </head>
+
 <body>
 
 <h1>Agenda Online</h1>
 
 <h3>1️⃣ Elegí el servicio</h3>
-
-<div id="servicios">
-  <button onclick="seleccionarServicio('Facial')">Facial</button>
-  <button onclick="seleccionarServicio('Limpieza')">Limpieza</button>
-  <button onclick="seleccionarServicio('Corporal')">Corporal</button>
-</div>
+<button onclick="seleccionarServicio('Facial')">Facial</button>
+<button onclick="seleccionarServicio('Limpieza')">Limpieza</button>
+<button onclick="seleccionarServicio('Corporal')">Corporal</button>
 
 <hr>
 
-<div id="agenda" style="display:none;">
-  <h3>2️⃣ Elegí horario disponible</h3>
-  <button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
-  <div id="resultado" class="horarios"></div>
-</div>
+<h3>2️⃣ Elegí horario disponible</h3>
+<button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
+
+<div id="agenda"></div>
 
 <script>
 
@@ -39,64 +30,68 @@ let servicioSeleccionado = null;
 function seleccionarServicio(servicio) {
   servicioSeleccionado = servicio;
   alert("Servicio seleccionado: " + servicio);
-  document.getElementById("agenda").style.display = "block";
 }
 
-function cargarAgenda() {
-  fetch(API_URL + "?action=agenda")
-    .then(res => res.json())
-    .then(data => mostrarAgenda(data));
-}
+async function cargarAgenda() {
 
-function mostrarAgenda(data) {
-  const contenedor = document.getElementById("resultado");
+  const contenedor = document.getElementById("agenda");
+  contenedor.innerHTML = "Cargando...";
+
+  const response = await fetch(API_URL + "?action=agenda");
+  const data = await response.json();
+
   contenedor.innerHTML = "";
 
   data.forEach(dia => {
+
     if (dia.bloquesDisponibles.length === 0) return;
 
-    const divDia = document.createElement("div");
-    divDia.className = "dia";
+    const titulo = document.createElement("h3");
+    titulo.textContent = `${dia.fecha} (${dia.dia})`;
+    contenedor.appendChild(titulo);
 
-    divDia.innerHTML = "<h3>" + dia.fecha + " (" + dia.dia + ")</h3>";
+    dia.bloquesDisponibles.forEach(bloque => {
 
-    dia.bloquesDisponibles.forEach(b => {
       const btn = document.createElement("button");
-      btn.textContent = b.hora;
-      btn.onclick = () => reservarTurno(b.fecha, b.hora);
-      divDia.appendChild(btn);
+      btn.textContent = bloque.hora;
+      btn.style.margin = "5px";
+
+      btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
+
+      contenedor.appendChild(btn);
     });
 
-    contenedor.appendChild(divDia);
   });
 }
 
-function reservarTurno(fecha, hora) {
+async function reservarTurno(fecha, hora) {
 
   if (!servicioSeleccionado) {
-    alert("Primero seleccioná un servicio");
+    alert("Primero elegí un servicio");
     return;
   }
 
-  const nombre = prompt("Tu nombre:");
-  const telefono = prompt("Tu teléfono:");
+  const nombre = prompt("Ingresá tu nombre:");
+  if (!nombre) return;
 
-  fetch(API_URL, {
+  const response = await fetch(API_URL + "?action=reservar", {
     method: "POST",
     body: JSON.stringify({
-      action: "reservar",
       fecha: fecha,
       hora: hora,
       servicio: servicioSeleccionado,
-      nombre: nombre,
-      telefono: telefono
+      nombre: nombre
     })
-  })
-  .then(res => res.json())
-  .then(resp => {
-    alert("Reserva confirmada");
-    cargarAgenda();
   });
+
+  const data = await response.json();
+
+  if (data.success) {
+    alert("Reserva confirmada ✅");
+    await cargarAgenda();
+  } else {
+    alert("Error al reservar");
+  }
 }
 
 </script>
