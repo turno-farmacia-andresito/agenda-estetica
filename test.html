@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Agenda Online</title>
-  <style>
-    body {
-      font-family: Arial;
-      padding: 30px;
-    }
+<meta charset="UTF-8">
+<title>Agenda Online</title>
 
-    h1 {
-      margin-bottom: 20px;
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 40px;
+}
 
-    .servicios button,
-    .horario-btn {
-      padding: 8px 14px;
-      margin: 5px;
-      cursor: pointer;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background: #f5f5f5;
-    }
+h1 {
+  margin-bottom: 30px;
+}
 
-    .servicios button.activo {
-      background: #72bd99;
-      color: white;
-      border: none;
-    }
+button {
+  padding: 8px 14px;
+  margin: 4px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
 
-    .dia {
-      margin-top: 15px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+button:hover {
+  background-color: #f0f0f0;
+}
 
-    .horarios-container {
-      margin-top: 8px;
-      margin-bottom: 10px;
-    }
+.servicio-activo {
+  background-color: #72bd99;
+  color: white;
+  border: none;
+}
 
-  </style>
+.horario-btn {
+  background-color: #f5f5f5;
+}
+
+.horario-btn:hover {
+  background-color: #72bd99;
+  color: white;
+}
+
+.seccion {
+  margin-bottom: 30px;
+}
+</style>
 </head>
 
 <body>
 
 <h1>Agenda Online</h1>
 
-<h3>1️⃣ Elegí el servicio</h3>
-<div class="servicios">
+<div class="seccion">
+  <h3>1️⃣ Elegí el servicio</h3>
   <button onclick="seleccionarServicio(this)">Facial</button>
   <button onclick="seleccionarServicio(this)">Limpieza</button>
   <button onclick="seleccionarServicio(this)">Corporal</button>
@@ -56,100 +60,75 @@
 
 <hr>
 
-<h3>2️⃣ Elegí horario disponible</h3>
-<button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
+<div class="seccion">
+  <h3>2️⃣ Elegí horario disponible</h3>
+  <button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
+</div>
 
 <div id="agenda"></div>
 
 <script>
 
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzIeuaYwueVSG_TZiRlSLkzGy4oZ4z0mu4IQ2eYl-iLzxBX7Rq_zJujVMOR-MT-oC5H/exec";
+
 let servicioSeleccionado = null;
-let agendaGlobal = [];
 
 function seleccionarServicio(btn) {
-  document.querySelectorAll(".servicios button").forEach(b => b.classList.remove("activo"));
-  btn.classList.add("activo");
+
+  document.querySelectorAll("button").forEach(b => {
+    b.classList.remove("servicio-activo");
+  });
+
+  btn.classList.add("servicio-activo");
   servicioSeleccionado = btn.innerText;
 }
 
 function cargarAgenda() {
 
-  fetch("https://script.google.com/macros/s/AKfycbyec_jJOE9A7v-zdjJ6z2Wuqt19_dqmGSrLxa0h-64vZk2K_xlZju6QQ40RtB3AEW4u/exec?action=generarAgenda")
-    .then(res => res.json())
-    .then(data => {
-
-      agendaGlobal = data;
-      const contenedor = document.getElementById("agenda");
-      contenedor.innerHTML = "";
-
-      data.forEach((diaData, index) => {
-
-        const diaDiv = document.createElement("div");
-        diaDiv.className = "dia";
-        diaDiv.innerText = `${diaData.fecha} (${diaData.bloquesDisponibles.length})`;
-        diaDiv.onclick = () => toggleHorarios(index);
-
-        const horariosDiv = document.createElement("div");
-        horariosDiv.className = "horarios-container";
-        horariosDiv.id = "horarios-" + index;
-        horariosDiv.style.display = "none";
-
-        contenedor.appendChild(diaDiv);
-        contenedor.appendChild(horariosDiv);
-
-      });
-
-    });
-}
-
-function toggleHorarios(index) {
-
-  const horariosDiv = document.getElementById("horarios-" + index);
-  const diaData = agendaGlobal[index];
-
-  if (horariosDiv.style.display === "none") {
-
-    horariosDiv.innerHTML = "";
-
-    diaData.bloquesDisponibles.forEach(bloque => {
-
-      const btn = document.createElement("button");
-      btn.className = "horario-btn";
-      btn.innerText = bloque.hora;
-
-      btn.onclick = () => reservar(bloque.fecha, bloque.hora);
-
-      horariosDiv.appendChild(btn);
-
-    });
-
-    horariosDiv.style.display = "block";
-
-  } else {
-    horariosDiv.style.display = "none";
-  }
-}
-
-function reservar(fecha, hora) {
-
   if (!servicioSeleccionado) {
-    alert("Primero elegí el servicio");
+    alert("Primero seleccioná un servicio");
     return;
   }
 
-  fetch(`https://script.google.com/macros/s/AKfycbyec_jJOE9A7v-zdjJ6z2Wuqt19_dqmGSrLxa0h-64vZk2K_xlZju6QQ40RtB3AEW4u/exec?action=reservar&fecha=${fecha}&hora=${hora}&servicio=${servicioSeleccionado}`)
+  fetch(URL_SCRIPT + "?action=generarAgenda")
     .then(res => res.json())
-    .then(resp => {
+    .then(data => mostrarAgenda(data))
+    .catch(err => {
+      console.error(err);
+      alert("Error cargando agenda");
+    });
+}
 
-      if (resp.success) {
-        alert("Reserva confirmada");
-        cargarAgenda();
-      } else {
-        alert("Error al reservar");
-      }
+function mostrarAgenda(data) {
 
+  const contenedor = document.getElementById("agenda");
+  contenedor.innerHTML = "";
+
+  data.forEach(dia => {
+
+    const titulo = document.createElement("h4");
+    titulo.innerText = dia.fecha + " (" + dia.dia + ") - " + dia.bloquesDisponibles.length + " disponibles";
+    contenedor.appendChild(titulo);
+
+    dia.bloquesDisponibles.forEach(bloque => {
+
+      const btn = document.createElement("button");
+      btn.classList.add("horario-btn");
+      btn.innerText = bloque.hora;
+
+      btn.onclick = function() {
+        confirmarReserva(bloque.fecha, bloque.hora);
+      };
+
+      contenedor.appendChild(btn);
     });
 
+    contenedor.appendChild(document.createElement("hr"));
+  });
+}
+
+function confirmarReserva(fecha, hora) {
+  alert("Reservando " + servicioSeleccionado + " el " + fecha + " a las " + hora);
 }
 
 </script>
