@@ -77,7 +77,7 @@ function seleccionarServicio(btn) {
 
 function cargarAgenda() {
 
-  fetch("https://script.google.com/macros/s/AKfycbw-4r8NRhpCFlbYRZWpRotRPPYPvZrN62dS_Q-wERVfZ487UpN_peedsIiDVcipGz6t/exec?action=generarAgenda")
+  fetch("https://script.google.com/macros/s/AKfycbzAjtvKFAKkVQ3vJthzmmRlZewXEtIW9SgdsqUgWHYvKM7sxx53hGCT7FqIRC-O-VYO/exec?action=generarAgenda")
     .then(res => res.json())
     .then(data => {
 
@@ -109,10 +109,12 @@ function cargarAgenda() {
             }
 
             const nombre = prompt("Ingresá tu nombre");
-
             if (!nombre) return;
 
-            alert("Reserva simulada:\n" + servicioSeleccionado + "\n" + h.fecha + " " + h.hora + "\nCliente: " + nombre);
+            alert("Reserva simulada:\n" +
+                  servicioSeleccionado + "\n" +
+                  h.fecha + " " + h.hora + "\n" +
+                  "Cliente: " + nombre);
           };
 
           horasDiv.appendChild(btn);
