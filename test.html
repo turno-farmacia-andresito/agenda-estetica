@@ -1,97 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Agenda Online</title>
-</head>
+<meta charset="UTF-8">
+<title>Agenda Online</title>
 
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.boton-servicio,
+.boton-hora {
+  margin: 5px;
+  padding: 8px 14px;
+  border: 1px solid #333;
+  background: #f4f4f4;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.boton-servicio.activo {
+  background: #72bd99;
+  color: white;
+  border: none;
+}
+
+.seccion {
+  margin-top: 25px;
+}
+
+hr {
+  margin: 25px 0;
+}
+</style>
+
+</head>
 <body>
 
 <h1>Agenda Online</h1>
 
-<h3>1️⃣ Elegí el servicio</h3>
-<button onclick="seleccionarServicio('Facial')">Facial</button>
-<button onclick="seleccionarServicio('Limpieza')">Limpieza</button>
-<button onclick="seleccionarServicio('Corporal')">Corporal</button>
+<div class="seccion">
+  <h3>1️⃣ Elegí el servicio</h3>
+  <button class="boton-servicio" onclick="seleccionarServicio('Facial')">Facial</button>
+  <button class="boton-servicio" onclick="seleccionarServicio('Limpieza')">Limpieza</button>
+  <button class="boton-servicio" onclick="seleccionarServicio('Corporal')">Corporal</button>
+</div>
 
 <hr>
 
-<h3>2️⃣ Elegí horario disponible</h3>
-<button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
-
-<div id="agenda"></div>
+<div class="seccion">
+  <h3>2️⃣ Elegí horario disponible</h3>
+  <button onclick="cargarAgenda()">Ver Horarios Disponibles</button>
+  <div id="agenda"></div>
+</div>
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwbmSWJuaoK-5ltcw4Bbk_xqW5ZzInCAfjdxjYh2avUkCoRJjzuQPtwyDF7Yol0t1Ry/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwbmSWJuaoK-5ltcw4Bbk_xqW5ZzInCAfjdxjYh2avUkCoRJjzuQPtwyDF7Yol0t1Ry/exec";
 
 let servicioSeleccionado = null;
 
 function seleccionarServicio(servicio) {
   servicioSeleccionado = servicio;
-  alert("Servicio seleccionado: " + servicio);
+
+  document.querySelectorAll(".boton-servicio").forEach(btn => {
+    btn.classList.remove("activo");
+  });
+
+  event.target.classList.add("activo");
 }
 
-async function cargarAgenda() {
+function cargarAgenda() {
 
-  const contenedor = document.getElementById("agenda");
-  contenedor.innerHTML = "Cargando...";
+  fetch(URL_SCRIPT + "?action=generarAgenda")
+    .then(res => res.json())
+    .then(data => {
 
-  const response = await fetch(API_URL + "?action=agenda");
-  const data = await response.json();
+      const contenedor = document.getElementById("agenda");
+      contenedor.innerHTML = "";
 
-  contenedor.innerHTML = "";
+      data.forEach(dia => {
 
-  data.forEach(dia => {
+        if (dia.bloquesDisponibles.length === 0) return;
 
-    if (dia.bloquesDisponibles.length === 0) return;
+        let titulo = document.createElement("h3");
+        titulo.textContent = `${dia.fecha} (${dia.dia})`;
+        contenedor.appendChild(titulo);
 
-    const titulo = document.createElement("h3");
-    titulo.textContent = `${dia.fecha} (${dia.dia})`;
-    contenedor.appendChild(titulo);
+        dia.bloquesDisponibles.forEach(bloque => {
 
-    dia.bloquesDisponibles.forEach(bloque => {
+          let boton = document.createElement("button");
+          boton.className = "boton-hora";
+          boton.textContent = bloque.hora;
 
-      const btn = document.createElement("button");
-      btn.textContent = bloque.hora;
-      btn.style.margin = "5px";
+          boton.onclick = () => reservar(bloque.fecha, bloque.hora);
 
-      btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
+          contenedor.appendChild(boton);
+        });
 
-      contenedor.appendChild(btn);
+      });
+
+    })
+    .catch(err => {
+      console.error("Error:", err);
     });
 
-  });
 }
 
-async function reservarTurno(fecha, hora) {
+function reservar(fecha, hora) {
 
   if (!servicioSeleccionado) {
-    alert("Primero elegí un servicio");
+    alert("Primero seleccioná un servicio");
     return;
   }
 
-  const nombre = prompt("Ingresá tu nombre:");
-  if (!nombre) return;
+  alert(
+    "Reserva confirmada\n\n" +
+    "Servicio: " + servicioSeleccionado + "\n" +
+    "Fecha: " + fecha + "\n" +
+    "Hora: " + hora
+  );
 
-  const response = await fetch(API_URL + "?action=reservar", {
-    method: "POST",
-    body: JSON.stringify({
-      fecha: fecha,
-      hora: hora,
-      servicio: servicioSeleccionado,
-      nombre: nombre
-    })
-  });
-
-  const data = await response.json();
-
-  if (data.success) {
-    alert("Reserva confirmada ✅");
-    await cargarAgenda();
-  } else {
-    alert("Error al reservar");
-  }
 }
 
 </script>
