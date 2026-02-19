@@ -2,25 +2,26 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agenda Online</title>
 
 <style>
 body {
   font-family: Arial, sans-serif;
-  margin: 40px;
+  padding: 20px;
 }
 
 h1 {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 button {
   padding: 8px 14px;
-  margin: 4px;
+  margin: 5px;
   cursor: pointer;
 }
 
-.servicio-btn.activo {
+.servicio-activo {
   background-color: #72bd99;
   color: white;
   border: none;
@@ -28,18 +29,12 @@ button {
 
 .dia {
   margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid #ccc;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
 }
 
-.horas button {
-  background-color: #f2f2f2;
-  border: 1px solid #ccc;
-}
-
-.horas button:hover {
-  background-color: #72bd99;
-  color: white;
+.horarios button {
+  margin: 5px 5px 5px 0;
 }
 </style>
 </head>
@@ -49,15 +44,13 @@ button {
 <h1>Agenda Online</h1>
 
 <h3>1️⃣ Elegí el servicio</h3>
-
-<button class="servicio-btn" onclick="seleccionarServicio(this,'Facial')">Facial</button>
-<button class="servicio-btn" onclick="seleccionarServicio(this,'Limpieza')">Limpieza</button>
-<button class="servicio-btn" onclick="seleccionarServicio(this,'Corporal')">Corporal</button>
+<button onclick="seleccionarServicio(this)">Facial</button>
+<button onclick="seleccionarServicio(this)">Limpieza</button>
+<button onclick="seleccionarServicio(this)">Corporal</button>
 
 <hr>
 
 <h3>2️⃣ Elegí horario disponible</h3>
-
 <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
 
 <div id="agenda"></div>
@@ -66,68 +59,65 @@ button {
 
 let servicioSeleccionado = null;
 
-const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxcaoF_8mYGwFDWY3Vby0lpM_6oQlpjuQq52gPTsrnFwy5rqsKoBEfk3g42y5DI4YRi/exec";
+function seleccionarServicio(btn) {
+  document.querySelectorAll("button").forEach(b => {
+    if (b.innerText === "Facial" || b.innerText === "Limpieza" || b.innerText === "Corporal") {
+      b.classList.remove("servicio-activo");
+    }
+  });
 
-function seleccionarServicio(btn, servicio) {
-
-  document.querySelectorAll(".servicio-btn").forEach(b => b.classList.remove("activo"));
-
-  btn.classList.add("activo");
-  servicioSeleccionado = servicio;
+  btn.classList.add("servicio-activo");
+  servicioSeleccionado = btn.innerText;
 }
 
 function cargarHorarios() {
 
-  fetch(URL_SCRIPT + "?action=generarAgenda")
-    .then(res => res.json())
-    .then(data => mostrarAgenda(data))
-    .catch(err => {
-      console.error(err);
-      alert("Error cargando agenda");
-    });
-}
+  fetch("https://script.google.com/macros/s/AKfycbyoUI9SV-YyKHEVNJoWrocLm6QYuYUjq-mY90kLedJwJMrqI_OAItkeAbW32ejQVRVf/exec")
+  .then(res => res.json())
+  .then(data => {
 
-function mostrarAgenda(data) {
+    const agenda = document.getElementById("agenda");
+    agenda.innerHTML = "";
 
-  const contenedor = document.getElementById("agenda");
-  contenedor.innerHTML = "";
+    data.forEach(dia => {
 
-  data.forEach(dia => {
+      const contenedorDia = document.createElement("div");
+      contenedorDia.className = "dia";
 
-    const divDia = document.createElement("div");
-    divDia.className = "dia";
+      const titulo = document.createElement("strong");
+      titulo.innerText = dia.fecha + " - " + dia.bloquesDisponibles.length + " turnos";
+      contenedorDia.appendChild(titulo);
 
-    const titulo = document.createElement("h4");
-    titulo.textContent = dia.fecha + " - " + dia.bloquesDisponibles.length + " turnos";
+      const contHorarios = document.createElement("div");
+      contHorarios.className = "horarios";
 
-    divDia.appendChild(titulo);
+      dia.bloquesDisponibles.forEach(b => {
+        const btnHora = document.createElement("button");
+        btnHora.innerText = b.hora;
+        btnHora.onclick = () => reservarTurno(b.fecha, b.hora);
+        contHorarios.appendChild(btnHora);
+      });
 
-    const divHoras = document.createElement("div");
-    divHoras.className = "horas";
-
-    dia.bloquesDisponibles.forEach(bloque => {
-
-      const btn = document.createElement("button");
-      btn.textContent = bloque.hora;
-
-      btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
-
-      divHoras.appendChild(btn);
+      contenedorDia.appendChild(contHorarios);
+      agenda.appendChild(contenedorDia);
     });
 
-    divDia.appendChild(divHoras);
-    contenedor.appendChild(divDia);
+  })
+  .catch(err => {
+    alert("Error cargando horarios");
+    console.log(err);
   });
 }
 
 function reservarTurno(fecha, hora) {
-
   if (!servicioSeleccionado) {
-    alert("Primero seleccioná un servicio");
+    alert("Primero elegí un servicio");
     return;
   }
 
-  alert("Reserva simulada:\nServicio: " + servicioSeleccionado + "\nFecha: " + fecha + "\nHora: " + hora);
+  alert("Turno seleccionado:\nServicio: " + servicioSeleccionado +
+        "\nFecha: " + fecha +
+        "\nHora: " + hora);
 }
 
 </script>
