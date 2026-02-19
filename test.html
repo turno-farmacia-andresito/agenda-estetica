@@ -16,6 +16,17 @@ button {
   cursor: pointer;
 }
 
+.servicio-btn {
+  border: 1px solid #ccc;
+  background: #f5f5f5;
+}
+
+.servicio-btn.activo {
+  background: #72bd99;
+  color: white;
+  border-color: #72bd99;
+}
+
 .hora-btn {
   border: 1px solid #ccc;
   background: #f5f5f5;
@@ -38,9 +49,10 @@ button {
 <h1>Agenda Online</h1>
 
 <h3>1️⃣ Elegí el servicio</h3>
-<button>Facial</button>
-<button>Limpieza</button>
-<button>Corporal</button>
+
+<button class="servicio-btn" onclick="seleccionarServicio('Facial', this)">Facial</button>
+<button class="servicio-btn" onclick="seleccionarServicio('Limpieza', this)">Limpieza</button>
+<button class="servicio-btn" onclick="seleccionarServicio('Corporal', this)">Corporal</button>
 
 <h3 style="margin-top:30px;">2️⃣ Elegí horario disponible</h3>
 <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
@@ -51,7 +63,27 @@ button {
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzyGRIEu9dYbm2IqD5fE_r9r14wnczacbXM6JY-NrH3vdbbHmfkQ5QopX7oQHl8uSK6/exec?action=generarAgenda";
 
+let servicioSeleccionado = null;
+
+function seleccionarServicio(servicio, boton) {
+
+  servicioSeleccionado = servicio;
+
+  // quitar selección previa
+  document.querySelectorAll(".servicio-btn").forEach(btn => {
+    btn.classList.remove("activo");
+  });
+
+  // marcar seleccionado
+  boton.classList.add("activo");
+}
+
 async function cargarHorarios() {
+
+  if (!servicioSeleccionado) {
+    alert("Primero seleccioná un servicio.");
+    return;
+  }
 
   const contenedor = document.getElementById("agenda");
   contenedor.innerHTML = "Cargando...";
