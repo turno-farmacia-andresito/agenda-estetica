@@ -1,64 +1,65 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agenda Online</title>
+  <meta charset="UTF-8">
+  <title>Agenda Online</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f5f5f5;
+    }
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
-  padding: 20px;
-}
+    h1 {
+      margin-bottom: 20px;
+    }
 
-h1 {
-  font-size: 32px;
-}
+    .section {
+      margin-top: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #ccc;
+    }
 
-.seccion {
-  margin-top: 30px;
-}
+    .btn-servicio {
+      padding: 8px 14px;
+      margin-right: 8px;
+      border: 1px solid #999;
+      background: #e0e0e0;
+      cursor: pointer;
+    }
 
-button {
-  padding: 8px 14px;
-  margin: 4px;
-  border: 1px solid #999;
-  background: #e0e0e0;
-  cursor: pointer;
-  border-radius: 4px;
-}
+    .btn-servicio.activo {
+      background: #72bd99;
+      color: white;
+      border: none;
+    }
 
-button.activo {
-  background: #72bd99;
-  color: white;
-  border: none;
-}
+    .btn-hora {
+      padding: 6px 10px;
+      margin: 5px 5px 5px 0;
+      border: 1px solid #888;
+      background: #eaeaea;
+      cursor: pointer;
+    }
 
-.fecha-bloque {
-  margin-top: 20px;
-  padding-top: 10px;
-  border-top: 1px solid #ccc;
-}
-
-.horas {
-  margin-top: 10px;
-}
-</style>
+    .dia {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
 </head>
-
 <body>
 
 <h1>Agenda Online</h1>
 
-<div class="seccion">
+<div class="section">
   <h3>1️⃣ Elegí el servicio</h3>
-  <button onclick="seleccionarServicio(this,'Facial')" class="activo">Facial</button>
-  <button onclick="seleccionarServicio(this,'Limpieza')">Limpieza</button>
-  <button onclick="seleccionarServicio(this,'Corporal')">Corporal</button>
+  <button class="btn-servicio activo">Facial</button>
+  <button class="btn-servicio">Limpieza</button>
+  <button class="btn-servicio">Corporal</button>
 </div>
 
-<div class="seccion">
+<div class="section">
   <h3>2️⃣ Elegí horario disponible</h3>
   <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
   <div id="agenda"></div>
@@ -66,62 +67,42 @@ button.activo {
 
 <script>
 
-let servicioSeleccionado = "Facial";
-
-function seleccionarServicio(btn, servicio) {
-  document.querySelectorAll("button").forEach(b => b.classList.remove("activo"));
-  btn.classList.add("activo");
-  servicioSeleccionado = servicio;
-}
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby-Qok2wEFDNepkx_5NUhclkBK2t2UwRlApSK1ByaDnluGyeCStghmSu4y9G-Bsukwb/exec";
 
 function cargarHorarios() {
 
-  fetch("https://script.google.com/macros/s/AKfycbx4fGHTirPqMOp4t5oBHZA2dSgZ3m6Sck4JpuksKoc3Qe2L-6X0K4jTyvcSr2QggfkW/exec?action=generarAgenda")
-  .then(res => res.json())
-  .then(data => {
+  fetch(URL_SCRIPT + "?action=generarAgenda")
+    .then(response => response.json())
+    .then(data => {
 
-    const agendaDiv = document.getElementById("agenda");
-    agendaDiv.innerHTML = "";
+      const contenedor = document.getElementById("agenda");
+      contenedor.innerHTML = "";
 
-    data.forEach(dia => {
+      data.forEach(dia => {
 
-      const contenedor = document.createElement("div");
-      contenedor.className = "fecha-bloque";
+        const divDia = document.createElement("div");
+        divDia.className = "dia";
+        divDia.innerText = `${dia.fecha} - ${dia.bloquesDisponibles.length} turnos`;
 
-      const titulo = document.createElement("strong");
-      titulo.textContent = `${dia.fecha} - ${dia.bloquesDisponibles.length} turnos`;
-      contenedor.appendChild(titulo);
+        contenedor.appendChild(divDia);
 
-      const horasDiv = document.createElement("div");
-      horasDiv.className = "horas";
+        dia.bloquesDisponibles.forEach(bloque => {
 
-      dia.bloquesDisponibles.forEach(b => {
+          const btn = document.createElement("button");
+          btn.className = "btn-hora";
+          btn.innerText = bloque.hora;
 
-        const btnHora = document.createElement("button");
-        btnHora.textContent = b.hora;
+          contenedor.appendChild(btn);
 
-        btnHora.onclick = () => {
-          alert(
-            "Reservar:\n" +
-            "Servicio: " + servicioSeleccionado +
-            "\nFecha: " + b.fecha +
-            "\nHora: " + b.hora
-          );
-        };
+        });
 
-        horasDiv.appendChild(btnHora);
       });
 
-      contenedor.appendChild(horasDiv);
-      agendaDiv.appendChild(contenedor);
-
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("Error al cargar horarios");
     });
-
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Error cargando horarios");
-  });
 
 }
 
