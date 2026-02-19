@@ -7,45 +7,39 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  margin: 40px;
+  padding: 30px;
 }
 
 h1 {
-  font-size: 32px;
+  margin-bottom: 30px;
 }
 
-.seccion {
-  margin-top: 30px;
-}
-
-.btn-servicio {
-  padding: 8px 18px;
-  margin-right: 10px;
+button {
+  padding: 8px 14px;
+  margin: 4px;
   border: 1px solid #999;
-  background: #f2f2f2;
+  background: #f0f0f0;
   cursor: pointer;
 }
 
-.btn-servicio.activo {
+button.activo {
   background: #72bd99;
   color: white;
   border-color: #72bd99;
 }
 
-.btn-hora {
-  padding: 6px 12px;
-  margin: 5px;
-  border: 1px solid #999;
-  background: #f2f2f2;
-  cursor: pointer;
+.bloque-dia {
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid #ccc;
 }
 
-.btn-hora:hover {
-  background: #ddd;
+.bloques {
+  margin-top: 10px;
 }
 
-hr {
-  margin: 20px 0;
+.bloques button {
+  background: #fff;
 }
 </style>
 </head>
@@ -54,67 +48,86 @@ hr {
 
 <h1>Agenda Online</h1>
 
-<div class="seccion">
-  <h3>1️⃣ Elegí el servicio</h3>
+<h3>1️⃣ Elegí el servicio</h3>
 
-  <button class="btn-servicio" onclick="seleccionarServicio(this)">Facial</button>
-  <button class="btn-servicio" onclick="seleccionarServicio(this)">Limpieza</button>
-  <button class="btn-servicio" onclick="seleccionarServicio(this)">Corporal</button>
-</div>
+<button onclick="seleccionarServicio(this, 'Facial')">Facial</button>
+<button onclick="seleccionarServicio(this, 'Limpieza')">Limpieza</button>
+<button onclick="seleccionarServicio(this, 'Corporal')">Corporal</button>
 
 <hr>
 
-<div class="seccion">
-  <h3>2️⃣ Elegí horario disponible</h3>
+<h3>2️⃣ Elegí horario disponible</h3>
 
-  <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
+<button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
 
-  <div id="agenda"></div>
-</div>
+<div id="agenda"></div>
 
 <script>
 
 let servicioSeleccionado = null;
 
-function seleccionarServicio(boton) {
-  document.querySelectorAll(".btn-servicio").forEach(btn => {
+// 🔥 TU NUEVO LINK
+const API_URL = "https://script.google.com/macros/s/AKfycbyDjyFuWkR23CrVGPh5pbdPpyrtjtdgYFiuVTKeo9wkID5vbtIxlAG_a8nTowAp525A/exec";
+
+function seleccionarServicio(boton, servicio) {
+
+  servicioSeleccionado = servicio;
+
+  document.querySelectorAll("button").forEach(btn => {
     btn.classList.remove("activo");
   });
 
   boton.classList.add("activo");
-  servicioSeleccionado = boton.textContent;
 }
 
-async function cargarHorarios() {
+function cargarHorarios() {
 
   if (!servicioSeleccionado) {
-    alert("Primero seleccioná un servicio");
+    alert("Primero elegí un servicio.");
     return;
   }
 
-  const url = "https://script.google.com/macros/s/AKfycby-Qok2wEFDNepkx_5NUhclkBK2t2UwRlApSK1ByaDnluGyeCStghmSu4y9G-Bsukwb/exec?action=generarAgenda";
+  fetch(API_URL + "?action=generarAgenda")
+    .then(res => res.json())
+    .then(data => {
 
-  const respuesta = await fetch(url);
-  const datos = await respuesta.json();
+      const contenedor = document.getElementById("agenda");
+      contenedor.innerHTML = "";
 
-  const contenedor = document.getElementById("agenda");
-  contenedor.innerHTML = "";
+      data.forEach(dia => {
 
-  datos.forEach(dia => {
+        const divDia = document.createElement("div");
+        divDia.className = "bloque-dia";
 
-    const divDia = document.createElement("div");
-    divDia.innerHTML = `<h4>${dia.fecha} - ${dia.bloquesDisponibles.length} turnos</h4>`;
+        const titulo = document.createElement("strong");
+        titulo.textContent = dia.fecha + " - " + dia.bloquesDisponibles.length + " turnos";
 
-    dia.bloquesDisponibles.forEach(bloque => {
-      const btn = document.createElement("button");
-      btn.className = "btn-hora";
-      btn.textContent = bloque.hora;
-      divDia.appendChild(btn);
+        divDia.appendChild(titulo);
+
+        if (dia.bloquesDisponibles.length > 0) {
+
+          const divBloques = document.createElement("div");
+          divBloques.className = "bloques";
+
+          dia.bloquesDisponibles.forEach(b => {
+
+            const btn = document.createElement("button");
+            btn.textContent = b.hora;
+
+            divBloques.appendChild(btn);
+          });
+
+          divDia.appendChild(divBloques);
+        }
+
+        contenedor.appendChild(divDia);
+      });
+
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Error cargando horarios.");
     });
-
-    contenedor.appendChild(divDia);
-    contenedor.appendChild(document.createElement("hr"));
-  });
 }
 
 </script>
