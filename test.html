@@ -1,47 +1,52 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Agenda Online</title>
+  <meta charset="UTF-8">
+  <title>Agenda Online</title>
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 40px;
-}
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
 
-button {
-  padding: 6px 10px;
-  margin: 3px;
-  cursor: pointer;
-}
+    h1 {
+      margin-bottom: 20px;
+    }
 
-.servicio-btn {
-  border: 1px solid #ccc;
-  background: #f5f5f5;
-}
+    .botones-servicio button {
+      padding: 8px 15px;
+      margin-right: 10px;
+      cursor: pointer;
+      border: 1px solid #888;
+      background: #eee;
+    }
 
-.servicio-btn.activo {
-  background: #72bd99;
-  color: white;
-  border-color: #72bd99;
-}
+    .botones-servicio button.activo {
+      background: #72bd99;
+      color: white;
+      border: none;
+    }
 
-.hora-btn {
-  border: 1px solid #ccc;
-  background: #f5f5f5;
-}
+    .horario-btn {
+      padding: 6px 10px;
+      margin: 5px;
+      border: 1px solid #888;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
 
-.hora-btn:hover {
-  background: #dff5e8;
-}
+    .horario-btn:hover {
+      background: #72bd99;
+      color: white;
+    }
 
-.dia {
-  margin-top: 20px;
-  border-top: 1px solid #ddd;
-  padding-top: 10px;
-}
-</style>
+    .dia {
+      margin-top: 25px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+  </style>
 </head>
 
 <body>
@@ -50,74 +55,104 @@ button {
 
 <h3>1️⃣ Elegí el servicio</h3>
 
-<button class="servicio-btn" onclick="seleccionarServicio('Facial', this)">Facial</button>
-<button class="servicio-btn" onclick="seleccionarServicio('Limpieza', this)">Limpieza</button>
-<button class="servicio-btn" onclick="seleccionarServicio('Corporal', this)">Corporal</button>
+<div class="botones-servicio">
+  <button onclick="seleccionarServicio(this,'Facial')">Facial</button>
+  <button onclick="seleccionarServicio(this,'Limpieza')">Limpieza</button>
+  <button onclick="seleccionarServicio(this,'Corporal')">Corporal</button>
+</div>
 
-<h3 style="margin-top:30px;">2️⃣ Elegí horario disponible</h3>
+<br>
+
+<h3>2️⃣ Elegí horario disponible</h3>
 <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
 
 <div id="agenda"></div>
 
+
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzyGRIEu9dYbm2IqD5fE_r9r14wnczacbXM6JY-NrH3vdbbHmfkQ5QopX7oQHl8uSK6/exec?action=generarAgenda";
+const API_URL = "https://script.google.com/macros/s/AKfycbzuiufqrR6Jf549-yFuGia2p_Ej--wijPukTTx-UfGVDFWkhy2mcTyMA_lNlVEJwg_2/exec";
 
 let servicioSeleccionado = null;
 
-function seleccionarServicio(servicio, boton) {
+
+// ======================
+// Selección de servicio
+// ======================
+function seleccionarServicio(btn, servicio) {
 
   servicioSeleccionado = servicio;
 
-  // quitar selección previa
-  document.querySelectorAll(".servicio-btn").forEach(btn => {
-    btn.classList.remove("activo");
-  });
+  document.querySelectorAll(".botones-servicio button")
+    .forEach(b => b.classList.remove("activo"));
 
-  // marcar seleccionado
-  boton.classList.add("activo");
+  btn.classList.add("activo");
 }
 
-async function cargarHorarios() {
+
+// ======================
+// Cargar horarios
+// ======================
+function cargarHorarios() {
+
+  fetch(API_URL)
+    .then(r => r.json())
+    .then(data => {
+
+      const contenedor = document.getElementById("agenda");
+      contenedor.innerHTML = "";
+
+      data.forEach(dia => {
+
+        const divDia = document.createElement("div");
+        divDia.className = "dia";
+
+        const titulo = document.createElement("h4");
+        titulo.textContent = `${dia.fecha} - ${dia.bloquesDisponibles.length} turnos`;
+        divDia.appendChild(titulo);
+
+        dia.bloquesDisponibles.forEach(bloque => {
+
+          const btn = document.createElement("button");
+          btn.className = "horario-btn";
+          btn.textContent = bloque.hora;
+
+          btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
+
+          divDia.appendChild(btn);
+        });
+
+        contenedor.appendChild(divDia);
+      });
+
+    })
+    .catch(() => alert("Error cargando horarios."));
+}
+
+
+// ======================
+// Reservar turno
+// ======================
+function reservarTurno(fecha, hora) {
 
   if (!servicioSeleccionado) {
     alert("Primero seleccioná un servicio.");
     return;
   }
 
-  const contenedor = document.getElementById("agenda");
-  contenedor.innerHTML = "Cargando...";
+  fetch(`${API_URL}?action=reservar&fecha=${fecha}&hora=${hora}&servicio=${servicioSeleccionado}`)
+    .then(r => r.json())
+    .then(res => {
 
-  try {
+      if (res.ok) {
+        alert("Turno reservado correctamente");
+        cargarHorarios(); // refresca
+      } else {
+        alert("Error al reservar");
+      }
 
-    const response = await fetch(API_URL);
-    const data = await response.json();
-
-    contenedor.innerHTML = "";
-
-    data.forEach(dia => {
-
-      const divDia = document.createElement("div");
-      divDia.className = "dia";
-
-      const titulo = document.createElement("h4");
-      titulo.textContent = dia.fecha + " - " + dia.bloquesDisponibles.length + " turnos";
-      divDia.appendChild(titulo);
-
-      dia.bloquesDisponibles.forEach(bloque => {
-        const btn = document.createElement("button");
-        btn.className = "hora-btn";
-        btn.textContent = bloque.hora;
-        divDia.appendChild(btn);
-      });
-
-      contenedor.appendChild(divDia);
-    });
-
-  } catch (error) {
-    alert("Error cargando horarios");
-    console.error(error);
-  }
+    })
+    .catch(() => alert("Error de conexión."));
 }
 
 </script>
