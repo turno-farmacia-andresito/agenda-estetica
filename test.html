@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agenda Online</title>
 
 <style>
 body {
-  font-family: Arial;
-  max-width: 900px;
-  margin: 40px auto;
+  font-family: Arial, sans-serif;
+  padding: 20px;
 }
 
 h1 {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 button {
@@ -22,21 +22,20 @@ button {
 }
 
 .servicio-activo {
-  background: #72bd99;
+  background-color: #72bd99;
   color: white;
   border: none;
 }
 
 .dia {
-  margin-top: 25px;
-  padding-top: 10px;
-  border-top: 1px solid #ccc;
+  margin-top: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
 }
 
-.hora-btn {
+.horarios button {
   margin: 5px 5px 5px 0;
 }
-
 </style>
 </head>
 
@@ -45,97 +44,80 @@ button {
 <h1>Agenda Online</h1>
 
 <h3>1️⃣ Elegí el servicio</h3>
-
-<button onclick="seleccionarServicio(this,'Facial')">Facial</button>
-<button onclick="seleccionarServicio(this,'Limpieza')">Limpieza</button>
-<button onclick="seleccionarServicio(this,'Corporal')">Corporal</button>
+<button onclick="seleccionarServicio(this)">Facial</button>
+<button onclick="seleccionarServicio(this)">Limpieza</button>
+<button onclick="seleccionarServicio(this)">Corporal</button>
 
 <hr>
 
 <h3>2️⃣ Elegí horario disponible</h3>
-
 <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
 
 <div id="agenda"></div>
 
-
 <script>
-
-const API_URL = "https://script.google.com/macros/s/AKfycbzYu5gwKCHJM-rt0btK-mM2GIBgVl0vnAxAduYFBMTacESilsl_fjb19Cww8KCc598a/exec";
 
 let servicioSeleccionado = null;
 
-
-
-function seleccionarServicio(btn, servicio) {
-
-  servicioSeleccionado = servicio;
-
+function seleccionarServicio(btn) {
   document.querySelectorAll("button").forEach(b => {
-    b.classList.remove("servicio-activo");
+    if (b.innerText === "Facial" || b.innerText === "Limpieza" || b.innerText === "Corporal") {
+      b.classList.remove("servicio-activo");
+    }
   });
 
   btn.classList.add("servicio-activo");
+  servicioSeleccionado = btn.innerText;
 }
-
-
 
 function cargarHorarios() {
 
-  fetch(API_URL + "?action=generarAgenda")
-    .then(res => res.json())
-    .then(data => {
+  fetch("https://script.google.com/macros/s/AKfycbyoUI9SV-YyKHEVNJoWrocLm6QYuYUjq-mY90kLedJwJMrqI_OAItkeAbW32ejQVRVf/exec")
+  .then(res => res.json())
+  .then(data => {
 
-      const agendaDiv = document.getElementById("agenda");
-      agendaDiv.innerHTML = "";
+    const agenda = document.getElementById("agenda");
+    agenda.innerHTML = "";
 
-      data.forEach(dia => {
+    data.forEach(dia => {
 
-        const contenedorDia = document.createElement("div");
-        contenedorDia.className = "dia";
+      const contenedorDia = document.createElement("div");
+      contenedorDia.className = "dia";
 
-        const titulo = document.createElement("h4");
-        titulo.innerText = dia.fecha + " - " + dia.bloquesDisponibles.length + " turnos";
-        contenedorDia.appendChild(titulo);
+      const titulo = document.createElement("strong");
+      titulo.innerText = dia.fecha + " - " + dia.bloquesDisponibles.length + " turnos";
+      contenedorDia.appendChild(titulo);
 
-        dia.bloquesDisponibles.forEach(b => {
+      const contHorarios = document.createElement("div");
+      contHorarios.className = "horarios";
 
-          const btnHora = document.createElement("button");
-          btnHora.innerText = b.hora;
-          btnHora.className = "hora-btn";
-
-          btnHora.onclick = () => reservarTurno(b.fecha, b.hora);
-
-          contenedorDia.appendChild(btnHora);
-        });
-
-        agendaDiv.appendChild(contenedorDia);
+      dia.bloquesDisponibles.forEach(b => {
+        const btnHora = document.createElement("button");
+        btnHora.innerText = b.hora;
+        btnHora.onclick = () => reservarTurno(b.fecha, b.hora);
+        contHorarios.appendChild(btnHora);
       });
 
+      contenedorDia.appendChild(contHorarios);
+      agenda.appendChild(contenedorDia);
     });
+
+  })
+  .catch(err => {
+    alert("Error cargando horarios");
+    console.log(err);
+  });
 }
 
-
-
 function reservarTurno(fecha, hora) {
-
   if (!servicioSeleccionado) {
-    alert("Seleccioná un servicio primero");
+    alert("Primero elegí un servicio");
     return;
   }
 
-  fetch(API_URL + "?action=reservar&fecha=" + fecha + "&hora=" + hora + "&servicio=" + servicioSeleccionado)
-    .then(res => res.json())
-    .then(resp => {
-
-      if (resp.ok) {
-        alert("Turno reservado correctamente");
-        cargarHorarios();
-      } else {
-        alert("Error al reservar");
-      }
-
-    });
+  alert("Turno seleccionado:\nServicio: " + servicioSeleccionado +
+        "\nFecha: " + fecha +
+        "\nHora: " + hora);
 }
 
 </script>
