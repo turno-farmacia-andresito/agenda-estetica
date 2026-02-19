@@ -10,9 +10,7 @@ body {
   margin: 30px;
 }
 
-h1 {
-  margin-bottom: 20px;
-}
+h1 { margin-bottom: 20px; }
 
 input {
   padding: 8px;
@@ -66,7 +64,7 @@ button {
 
 <h1>Agenda Online</h1>
 
-<!-- LOGIN POR CLAVE -->
+<!-- LOGIN -->
 <div id="loginSection">
   <h3>Ingresá tu clave de acceso</h3>
   <input type="text" id="claveInput" placeholder="Ej: Casa Azul">
@@ -74,7 +72,7 @@ button {
   <p id="mensajeLogin" style="color:red;"></p>
 </div>
 
-<!-- AGENDA (oculta hasta validar) -->
+<!-- AGENDA -->
 <div id="agendaSection">
 
   <h3>1️⃣ Elegí el servicio</h3>
@@ -94,15 +92,12 @@ button {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxn0LgnQjRravNhvds-2bLtKZWQdpPjao2AteKExGHNhW5jg0pUygIfBZIIZ4hRu-Xv/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyY0RrddOCpFbqA-ZsSQYz5LrjuhVNKN1t3FR3g6zdFybsuOW67xroQX5nWjOEhz7CU/exec";
 
 let servicioSeleccionado = null;
-let clienteActivo = null;
 
 
-// =======================
-// VALIDAR CLAVE
-// =======================
+// 🔐 VALIDAR CLAVE
 function validarClave() {
 
   const clave = document.getElementById("claveInput").value.trim();
@@ -117,12 +112,8 @@ function validarClave() {
     .then(res => {
 
       if (res.valido) {
-
-        clienteActivo = res.nombre;
-
         document.getElementById("loginSection").style.display = "none";
         document.getElementById("agendaSection").style.display = "block";
-
       } else {
         document.getElementById("mensajeLogin").innerText = "Clave incorrecta.";
       }
@@ -134,9 +125,7 @@ function validarClave() {
 }
 
 
-// =======================
-// SELECCIONAR SERVICIO
-// =======================
+// 🟢 SELECCIONAR SERVICIO
 function seleccionarServicio(btn, servicio) {
 
   servicioSeleccionado = servicio;
@@ -148,9 +137,7 @@ function seleccionarServicio(btn, servicio) {
 }
 
 
-// =======================
-// CARGAR HORARIOS
-// =======================
+// 📅 CARGAR HORARIOS
 function cargarHorarios() {
 
   fetch(API_URL)
@@ -188,9 +175,7 @@ function cargarHorarios() {
 }
 
 
-// =======================
-// RESERVAR TURNO
-// =======================
+// 🟣 RESERVAR TURNO
 function reservarTurno(fecha, hora) {
 
   if (!servicioSeleccionado) {
