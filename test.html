@@ -7,54 +7,37 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  margin: 30px;
+  padding: 20px;
 }
 
-h1 { margin-bottom: 20px; }
-
-input {
-  padding: 8px;
-  width: 250px;
-  margin-right: 10px;
+h1 {
+  margin-bottom: 25px;
 }
 
-button {
+.servicios button,
+.horarios button {
+  margin: 5px;
   padding: 8px 14px;
   cursor: pointer;
+  border: 1px solid #999;
+  background: #f0f0f0;
 }
 
-.servicio-btn {
-  border: 1px solid #888;
-  background: #eee;
-  margin-right: 10px;
-}
-
-.servicio-btn.activo {
+.servicios button.activo {
   background: #72bd99;
   color: white;
   border: none;
 }
 
-.horario-btn {
-  padding: 6px 10px;
-  margin: 5px;
-  border: 1px solid #888;
-  background: #f5f5f5;
-  cursor: pointer;
-}
-
-.horario-btn:hover {
-  background: #72bd99;
-  color: white;
+.horarios button {
+  background: #eaeaea;
 }
 
 .dia {
-  margin-top: 25px;
-  border-top: 1px solid #ccc;
-  padding-top: 10px;
+  margin-top: 20px;
 }
 
-#agendaSection {
+.oculto {
   display: none;
 }
 </style>
@@ -64,26 +47,27 @@ button {
 
 <h1>Agenda Online</h1>
 
-<!-- LOGIN -->
-<div id="loginSection">
-  <h3>Ingresá tu clave de acceso</h3>
-  <input type="text" id="claveInput" placeholder="Ej: Casa Azul">
+<!-- CLAVE -->
+<div>
+  <h3>Ingresar clave</h3>
+  <input type="text" id="clave" placeholder="Clave de acceso">
   <button onclick="validarClave()">Ingresar</button>
-  <p id="mensajeLogin" style="color:red;"></p>
 </div>
 
-<!-- AGENDA -->
-<div id="agendaSection">
+<div id="contenido" class="oculto">
 
-  <h3>1️⃣ Elegí el servicio</h3>
+  <!-- SERVICIOS -->
+  <h3>Elegí el servicio</h3>
+  <div class="servicios">
+    <button onclick="seleccionarServicio(this,'Facial')">Facial</button>
+    <button onclick="seleccionarServicio(this,'Limpieza')">Limpieza</button>
+    <button onclick="seleccionarServicio(this,'Corporal')">Corporal</button>
+  </div>
 
-  <button class="servicio-btn" onclick="seleccionarServicio(this,'Facial')">Facial</button>
-  <button class="servicio-btn" onclick="seleccionarServicio(this,'Limpieza')">Limpieza</button>
-  <button class="servicio-btn" onclick="seleccionarServicio(this,'Corporal')">Corporal</button>
+  <hr>
 
-  <br><br>
-
-  <h3>2️⃣ Elegí horario disponible</h3>
+  <!-- HORARIOS -->
+  <h3>Elegí horario disponible</h3>
   <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
 
   <div id="agenda"></div>
@@ -92,127 +76,91 @@ button {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzy5SdhMM1ofS7Mkcs-yzbgV_I7RUoIRUBBTL_Ns2p0vAJ9VS4W_fAf_-sY-_hYjFZ6/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzUIAAdj6XSYEWJg3vwjGiB9uhYopjrLSohDg_jgbOrA98C3aPEAXBNBqKXlMrHOr72/exec";
 
 let servicioSeleccionado = null;
+let claveValidada = null;
 
-
-// 🔐 VALIDAR CLAVE
 function validarClave() {
 
-  const clave = document.getElementById("claveInput").value.trim();
+  const clave = document.getElementById("clave").value;
 
-  if (!clave) {
-    document.getElementById("mensajeLogin").innerText = "Ingresá una clave.";
-    return;
-  }
-
-  fetch(`${API_URL}?action=validarClave&clave=${encodeURIComponent(clave)}`)
-    .then(r => r.json())
-    .then(res => {
-
-      if (res.valido) {
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("agendaSection").style.display = "block";
-      } else {
-        document.getElementById("mensajeLogin").innerText = "Clave incorrecta.";
-      }
-
-    })
-    .catch(() => {
-      document.getElementById("mensajeLogin").innerText = "Error de conexion.";
-    });
+  fetch(API_URL + "?action=validarClave&clave=" + clave)
+  .then(r => r.json())
+  .then(data => {
+    if (data.valido) {
+      claveValidada = clave;
+      document.getElementById("contenido").classList.remove("oculto");
+      alert("Clave válida");
+    } else {
+      alert("Clave incorrecta");
+    }
+  });
 }
 
-
-// 🟢 SELECCIONAR SERVICIO
 function seleccionarServicio(btn, servicio) {
 
-  servicioSeleccionado = servicio;
-
-  document.querySelectorAll(".servicio-btn")
+  document.querySelectorAll(".servicios button")
     .forEach(b => b.classList.remove("activo"));
 
   btn.classList.add("activo");
+  servicioSeleccionado = servicio;
 }
 
-
-// 📅 CARGAR HORARIOS
 function cargarHorarios() {
 
   fetch(API_URL)
-    .then(r => r.json())
-    .then(data => {
+  .then(r => r.json())
+  .then(data => {
 
-      const contenedor = document.getElementById("agenda");
-      contenedor.innerHTML = "";
+    const agenda = document.getElementById("agenda");
+    agenda.innerHTML = "";
 
-      data.forEach(dia => {
+    data.forEach(dia => {
 
-        const divDia = document.createElement("div");
-        divDia.className = "dia";
+      const divDia = document.createElement("div");
+      divDia.className = "dia";
 
-        const titulo = document.createElement("h4");
-        titulo.textContent = formatearFecha(dia.fecha) + " - " + dia.bloquesDisponibles.length + " turnos";
-        divDia.appendChild(titulo);
+      divDia.innerHTML = "<strong>" + dia.fechaFormateada + "</strong>";
 
-        dia.bloquesDisponibles.forEach(bloque => {
+      const contenedorHoras = document.createElement("div");
+      contenedorHoras.className = "horarios";
 
-          const btn = document.createElement("button");
-          btn.className = "horario-btn";
-          btn.textContent = bloque.hora;
+      dia.bloquesDisponibles.forEach(bloque => {
 
-          btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
+        const btn = document.createElement("button");
+        btn.textContent = bloque.hora;
 
-          divDia.appendChild(btn);
-        });
+        btn.onclick = () => reservarTurno(bloque.fecha, bloque.hora);
 
-        contenedor.appendChild(divDia);
+        contenedorHoras.appendChild(btn);
       });
 
-    })
-    .catch(() => alert("Error cargando horarios."));
+      divDia.appendChild(contenedorHoras);
+      agenda.appendChild(divDia);
+    });
+
+  });
 }
 
-
-// 🟣 RESERVAR TURNO
 function reservarTurno(fecha, hora) {
 
   if (!servicioSeleccionado) {
-    alert("Selecciona un servicio.");
+    alert("Seleccioná un servicio primero");
     return;
   }
 
-  fetch(`${API_URL}?action=reservar&fecha=${fecha}&hora=${hora}&servicio=${servicioSeleccionado}`)
-    .then(r => r.json())
-    .then(res => {
+  fetch(API_URL + "?action=reservar" +
+    "&fecha=" + fecha +
+    "&hora=" + hora +
+    "&servicio=" + servicioSeleccionado +
+    "&clave=" + claveValidada)
+  .then(r => r.json())
+  .then(data => {
+    alert(data.mensaje);
+    cargarHorarios();
+  });
 
-      if (res.ok) {
-        alert("Turno reservado correctamente");
-        cargarHorarios();
-      } else {
-        alert("Error al reservar");
-      }
-
-    })
-    .catch(() => alert("Error de conexion."));
-}
-
-
-// 🧠 FORMATEAR FECHA PARA MOSTRAR LINDO
-function formatearFecha(fechaISO) {
-
-  const fecha = new Date(fechaISO);
-
-  const opciones = {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  };
-
-  let fechaFormateada = fecha.toLocaleDateString('es-AR', opciones);
-
-  return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
 }
 
 </script>
