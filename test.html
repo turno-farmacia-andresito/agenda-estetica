@@ -107,6 +107,15 @@ function seleccionarServicio(btn, servicio) {
   servicioSeleccionado = servicio;
 }
 
+function formatearFecha(fechaISO) {
+  const fecha = new Date(fechaISO);
+  return fecha.toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long"
+  });
+}
+
 function cargarHorarios() {
 
   fetch(API_URL)
@@ -121,7 +130,7 @@ function cargarHorarios() {
       const divDia = document.createElement("div");
       divDia.className = "dia";
 
-      divDia.innerHTML = "<strong>" + dia.fechaFormateada + "</strong>";
+      divDia.innerHTML = "<strong>" + formatearFecha(dia.fecha) + "</strong>";
 
       const contenedorHoras = document.createElement("div");
       contenedorHoras.className = "horarios";
