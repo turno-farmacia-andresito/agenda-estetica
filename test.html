@@ -5,41 +5,26 @@
 <title>Agenda Online</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
-
-h1 {
-  margin-bottom: 25px;
-}
+body { font-family: Arial; padding:20px; }
 
 .servicios button,
 .horarios button {
-  margin: 5px;
-  padding: 8px 14px;
-  cursor: pointer;
-  border: 1px solid #999;
-  background: #f0f0f0;
+  margin:5px;
+  padding:8px 14px;
+  cursor:pointer;
+  border:1px solid #999;
+  background:#f0f0f0;
 }
 
 .servicios button.activo {
-  background: #72bd99;
-  color: white;
-  border: none;
+  background:#72bd99;
+  color:white;
+  border:none;
 }
 
-.horarios button {
-  background: #eaeaea;
-}
+.dia { margin-top:20px; }
 
-.dia {
-  margin-top: 20px;
-}
-
-.oculto {
-  display: none;
-}
+.oculto { display:none; }
 </style>
 </head>
 
@@ -47,16 +32,12 @@ h1 {
 
 <h1>Agenda Online</h1>
 
-<!-- CLAVE -->
-<div>
-  <h3>Ingresar clave</h3>
-  <input type="text" id="clave" placeholder="Clave de acceso">
-  <button onclick="validarClave()">Ingresar</button>
-</div>
+<h3>Ingresar clave</h3>
+<input type="text" id="clave" placeholder="Clave de acceso">
+<button onclick="validarClave()">Ingresar</button>
 
 <div id="contenido" class="oculto">
 
-  <!-- SERVICIOS -->
   <h3>Elegí el servicio</h3>
   <div class="servicios">
     <button onclick="seleccionarServicio(this,'Facial')">Facial</button>
@@ -66,7 +47,6 @@ h1 {
 
   <hr>
 
-  <!-- HORARIOS -->
   <h3>Elegí horario disponible</h3>
   <button onclick="cargarHorarios()">Ver Horarios Disponibles</button>
 
@@ -99,21 +79,11 @@ function validarClave() {
 }
 
 function seleccionarServicio(btn, servicio) {
-
   document.querySelectorAll(".servicios button")
     .forEach(b => b.classList.remove("activo"));
 
   btn.classList.add("activo");
   servicioSeleccionado = servicio;
-}
-
-function formatearFecha(fechaISO) {
-  const fecha = new Date(fechaISO);
-  return fecha.toLocaleDateString("es-AR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long"
-  });
 }
 
 function cargarHorarios() {
@@ -130,10 +100,10 @@ function cargarHorarios() {
       const divDia = document.createElement("div");
       divDia.className = "dia";
 
-      divDia.innerHTML = "<strong>" + formatearFecha(dia.fecha) + "</strong>";
+      // 👇 usamos fechaFormateada directamente
+      divDia.innerHTML = "<strong>" + dia.fechaFormateada + "</strong>";
 
       const contenedorHoras = document.createElement("div");
-      contenedorHoras.className = "horarios";
 
       dia.bloquesDisponibles.forEach(bloque => {
 
@@ -169,7 +139,6 @@ function reservarTurno(fecha, hora) {
     alert(data.mensaje);
     cargarHorarios();
   });
-
 }
 
 </script>
