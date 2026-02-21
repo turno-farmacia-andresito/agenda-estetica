@@ -92,7 +92,7 @@ button {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyY0RrddOCpFbqA-ZsSQYz5LrjuhVNKN1t3FR3g6zdFybsuOW67xroQX5nWjOEhz7CU/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzy5SdhMM1ofS7Mkcs-yzbgV_I7RUoIRUBBTL_Ns2p0vAJ9VS4W_fAf_-sY-_hYjFZ6/exec";
 
 let servicioSeleccionado = null;
 
@@ -153,7 +153,7 @@ function cargarHorarios() {
         divDia.className = "dia";
 
         const titulo = document.createElement("h4");
-        titulo.textContent = `${dia.fecha} - ${dia.bloquesDisponibles.length} turnos`;
+        titulo.textContent = formatearFecha(dia.fecha) + " - " + dia.bloquesDisponibles.length + " turnos";
         divDia.appendChild(titulo);
 
         dia.bloquesDisponibles.forEach(bloque => {
@@ -196,6 +196,23 @@ function reservarTurno(fecha, hora) {
 
     })
     .catch(() => alert("Error de conexion."));
+}
+
+
+// 🧠 FORMATEAR FECHA PARA MOSTRAR LINDO
+function formatearFecha(fechaISO) {
+
+  const fecha = new Date(fechaISO);
+
+  const opciones = {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  };
+
+  let fechaFormateada = fecha.toLocaleDateString('es-AR', opciones);
+
+  return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
 }
 
 </script>
